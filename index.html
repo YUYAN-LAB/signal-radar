@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signal Radar · 开源 AI 硬件与具身智能信号雷达</title>
+<meta name="description" content="追踪 GitHub 上 AI 硬件、具身智能、VLA、世界模型、消费级机器人与 Vibe Coding 的早期热门项目，用早鸟信号帮你比市场早一步发现下一个 Open Duck。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#08090c; --bg-2:#0d0f14; --panel:#11131a; --panel-2:#161922;
+  --line:#22262f; --line-2:#2e333f;
+  --txt:#e8eaf0; --txt-2:#9aa3b5; --txt-3:#656d7f;
+  --accent:#ffb03a; --green:#4ade80; --red:#f87171; --blue:#60a5fa;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Inter',-apple-system,'PingFang SC','Microsoft YaHei','Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif;
+  --emoji:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Segoe UI Symbol',sans-serif;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg); color:var(--txt); font-family:var(--sans);
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  background-image:
+    radial-gradient(900px 500px at 12% -8%, rgba(255,176,58,.10), transparent 60%),
+    radial-gradient(700px 500px at 88% 4%, rgba(74,222,128,.07), transparent 60%);
+  background-attachment:fixed;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+::selection{background:rgba(255,176,58,.28)}
+.wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+
+/* ── 顶栏 ── */
+header{
+  position:sticky;top:0;z-index:50;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  background:rgba(8,9,12,.82); border-bottom:1px solid var(--line);
+}
+.nav{display:flex;align-items:center;gap:18px;height:62px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.02em;font-size:17px}
+.logo .dot{
+  width:9px;height:9px;border-radius:50%;background:var(--accent);
+  box-shadow:0 0 0 0 rgba(255,176,58,.7);animation:pulse 2.4s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(255,176,58,.55)}
+  70%{box-shadow:0 0 0 12px rgba(255,176,58,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,176,58,0)}
+}
+.logo small{color:var(--txt-3);font-weight:500;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+.nav-links{display:flex;gap:4px;margin-left:auto}
+.nav-links a{
+  padding:7px 13px;border-radius:9px;font-size:13.5px;color:var(--txt-2);
+  transition:.18s;font-weight:500;
+}
+.nav-links a:hover{color:var(--txt);background:var(--panel-2)}
+.status{
+  display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;
+  color:var(--txt-3);padding:5px 10px;border:1px solid var(--line);border-radius:99px;
+}
+.status b{color:var(--green);font-weight:500}
+
+/* ── Hero ── */
+.hero{padding:72px 24px 44px;position:relative;overflow:hidden}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+  border:1px solid rgba(255,176,58,.3);background:rgba(255,176,58,.07);
+  padding:6px 13px;border-radius:99px;margin-bottom:26px;
+}
+h1{
+  font-size:clamp(34px,5.2vw,62px);line-height:1.06;letter-spacing:-.035em;font-weight:800;
+  max-width:17ch;
+}
+h1 .grad{
+  background:linear-gradient(100deg,#ffb03a 0%,#ff7a45 45%,#f472b6 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.lede{margin-top:22px;font-size:17px;color:var(--txt-2);max-width:62ch;line-height:1.7}
+.lede b{color:var(--txt);font-weight:600}
+.hero-stats{display:flex;gap:36px;margin-top:40px;flex-wrap:wrap}
+.hstat .n{font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-.02em}
+.hstat .l{font-size:12px;color:var(--txt-3);margin-top:2px}
+
+/* ── 说明条 ── */
+.notice{
+  margin-top:34px;padding:14px 18px;border-radius:12px;font-size:13.5px;line-height:1.65;
+  border:1px solid rgba(255,176,58,.22);background:rgba(255,176,58,.055);color:#d9c7a8;
+}
+.notice b{color:var(--accent)}
+.notice code{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.06);padding:1px 6px;border-radius:5px}
+
+/* ── 主区 ── */
+section{padding:56px 24px}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px;flex-wrap:wrap}
+.sec-title{font-size:24px;font-weight:750;letter-spacing:-.02em}
+.sec-sub{font-size:13.5px;color:var(--txt-3);margin-top:5px}
+
+/* 领域卡 */
+.domains{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.dcard{
+  position:relative;padding:17px 18px;border-radius:var(--r);border:1px solid var(--line);
+  background:linear-gradient(160deg,var(--panel),var(--bg-2));cursor:pointer;
+  transition:.2s;overflow:hidden;
+}
+.dcard::before{
+  content:'';position:absolute;inset:0 auto 0 0;width:3px;background:var(--c);
+  opacity:.9;
+}
+.dcard:hover{transform:translateY(-2px);border-color:var(--line-2);background:var(--panel-2)}
+.dcard.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c), 0 8px 28px -12px var(--c)}
+.dcard .e{font-size:19px;font-family:var(--emoji)}
+.dcard .n{font-weight:650;font-size:14.5px;margin-top:7px;letter-spacing:-.01em}
+.dcard .m{font-family:var(--mono);font-size:11px;color:var(--txt-3);margin-top:6px}
+.dcard .m b{color:var(--txt-2);font-weight:500}
+
+/* 工具条 */
+.toolbar{
+  display:flex;gap:10px;align-items:center;margin:26px 0 18px;flex-wrap:wrap;
+  padding:12px;border-radius:12px;background:var(--panel);border:1px solid var(--line);
+}
+.search{
+  flex:1;min-width:200px;display:flex;align-items:center;gap:9px;
+  background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:8px 12px;
+}
+.search input{
+  flex:1;background:none;border:none;outline:none;color:var(--txt);font-size:13.5px;font-family:inherit;
+}
+.search input::placeholder{color:var(--txt-3)}
+.seg{display:flex;gap:2px;background:var(--bg-2);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{
+  padding:6px 12px;border-radius:6px;font-size:12.5px;color:var(--txt-2);transition:.15s;white-space:nowrap;
+}
+.seg button.on{background:var(--panel-2);color:var(--txt);box-shadow:0 1px 3px rgba(0,0,0,.4);font-weight:500}
+.seg button:hover:not(.on){color:var(--txt)}
+
+/* 卡片网格 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.card{
+  display:flex;flex-direction:column;gap:0;padding:18px 19px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--panel);
+  transition:.2s;position:relative;overflow:hidden;
+}
+.card:hover{border-color:var(--line-2);background:var(--panel-2);transform:translateY(-2px)}
+.card.ign{box-shadow:inset 0 0 0 1px rgba(255,176,58,.2), 0 10px 34px -20px rgba(255,176,58,.6)}
+.ctop{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.av{width:26px;height:26px;border-radius:7px;background:var(--bg-2);flex:0 0 auto;object-fit:cover}
+.rname{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rname .o{color:var(--txt-3);font-weight:400}
+.badge{
+  margin-left:auto;font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.08em;
+  padding:3px 7px;border-radius:5px;text-transform:uppercase;white-space:nowrap;flex:0 0 auto;
+}
+.b-ignition{background:rgba(255,176,58,.16);color:var(--accent);border:1px solid rgba(255,176,58,.4)}
+.b-rising{background:rgba(74,222,128,.13);color:var(--green);border:1px solid rgba(74,222,128,.32)}
+.b-mature{background:rgba(96,165,250,.1);color:#7fb0f5;border:1px solid rgba(96,165,250,.26)}
+.b-stable{background:rgba(255,255,255,.045);color:var(--txt-3);border:1px solid var(--line)}
+.b-list{background:rgba(167,139,250,.12);color:#b9a6f8;border:1px solid rgba(167,139,250,.3)}
+.desc{font-size:13px;color:var(--txt-2);line-height:1.62;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:42px}
+.why{
+  margin-top:11px;padding:9px 11px;border-radius:8px;font-size:12.5px;line-height:1.6;
+  background:rgba(255,176,58,.055);border-left:2px solid rgba(255,176,58,.5);color:#d3c4ab;
+}
+.metrics{display:flex;gap:14px;margin-top:13px;flex-wrap:wrap;align-items:baseline}
+.met{display:flex;flex-direction:column;gap:1px}
+.met .v{font-family:var(--mono);font-size:13.5px;font-weight:600;letter-spacing:-.02em}
+.met .k{font-size:10.5px;color:var(--txt-3);letter-spacing:.02em}
+.met .v.up{color:var(--green)}
+.cfoot{display:flex;align-items:center;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap}
+.tag{
+  font-size:10.5px;font-family:var(--mono);padding:2.5px 7px;border-radius:5px;
+  background:rgba(255,255,255,.045);color:var(--txt-2);border:1px solid var(--line);
+}
+.tag.d{color:var(--c,var(--txt-2));border-color:color-mix(in srgb,var(--c,#fff) 32%,transparent);background:color-mix(in srgb,var(--c,#fff) 9%,transparent)}
+.score{
+  margin-left:auto;display:flex;align-items:baseline;gap:4px;font-family:var(--mono);
+}
+.score .s{font-size:16px;font-weight:700;color:var(--accent)}
+.score .t{font-size:9.5px;color:var(--txt-3);letter-spacing:.04em}
+
+/* 迷你趋势图 */
+.spark{width:100%;height:26px;margin-top:10px;opacity:.75}
+
+/* 表格视图 */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{
+  text-align:left;font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--txt-3);padding:9px 10px;border-bottom:1px solid var(--line);
+  cursor:pointer;user-select:none;white-space:nowrap;
+}
+.tbl th:hover{color:var(--txt)}
+.tbl td{padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:hover td{background:var(--panel)}
+.tbl .nm{font-family:var(--mono);font-size:12.5px}
+.tbl .num{font-family:var(--mono);text-align:right;white-space:nowrap}
+
+.empty{padding:60px 20px;text-align:center;color:var(--txt-3);font-size:14px}
+.more{display:block;width:100%;margin-top:18px;padding:13px;border-radius:11px;border:1px dashed var(--line-2);color:var(--txt-2);font-size:13.5px;transition:.18s}
+.more:hover{border-color:var(--accent);color:var(--accent);background:rgba(255,176,58,.04)}
+
+/* ── 方法论 ── */
+.method{background:var(--bg-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:26px}
+.mbox{padding:20px;border-radius:var(--r);border:1px solid var(--line);background:var(--panel)}
+.mbox .h{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px}
+.mbox h4{font-size:15px;font-weight:650;margin-bottom:8px;letter-spacing:-.01em}
+.mbox p{font-size:13px;color:var(--txt-2);line-height:1.68}
+.formula{
+  font-family:var(--mono);font-size:12px;line-height:1.9;color:var(--txt-2);
+  background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:14px;margin-top:12px;
+  overflow-x:auto;
+}
+.formula em{color:var(--accent);font-style:normal}
+.formula span{color:var(--txt-3)}
+
+/* ── 社群 ── */
+.community{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.ccard{
+  display:block;padding:16px 17px;border-radius:var(--r);border:1px solid var(--line);
+  background:var(--panel);transition:.18s;
+}
+.ccard:hover{border-color:var(--line-2);background:var(--panel-2);transform:translateY(-2px)}
+.ccard .t{font-weight:650;font-size:14px;display:flex;align-items:center;gap:8px}
+.ccard .d{font-size:12.5px;color:var(--txt-3);margin-top:5px;line-height:1.55}
+.ccard .u{font-family:var(--mono);font-size:10.5px;color:var(--accent);margin-top:8px;opacity:.8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── 页脚 ── */
+footer{padding:40px 0;border-top:1px solid var(--line);color:var(--txt-3);font-size:12.5px}
+footer .row{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+footer a{color:var(--txt-2)}
+footer a:hover{color:var(--accent)}
+
+/* 模态 */
+.modal{
+  position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+  background:rgba(4,5,7,.78);backdrop-filter:blur(6px);padding:20px;
+}
+.modal.on{display:flex}
+.mbody{
+  width:min(760px,100%);max-height:86vh;overflow:auto;border-radius:18px;
+  background:var(--panel);border:1px solid var(--line-2);padding:26px;
+}
+.mbody h3{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.mbody .sub{font-family:var(--mono);font-size:12px;color:var(--txt-3);margin-bottom:16px}
+.mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin:16px 0}
+.mstat{padding:11px 13px;border-radius:9px;background:var(--bg-2);border:1px solid var(--line)}
+.mstat .v{font-family:var(--mono);font-size:17px;font-weight:700}
+.mstat .k{font-size:10.5px;color:var(--txt-3);margin-top:2px}
+.close{position:relative;float:right;font-size:22px;color:var(--txt-3);line-height:1;padding:2px 6px}
+.close:hover{color:var(--txt)}
+@media(max-width:720px){
+  .wrap,section{padding-left:16px;padding-right:16px}
+  .hero{padding:48px 16px 30px}
+  .grid{grid-template-columns:1fr}
+  .nav-links{display:none}
+  .hero-stats{gap:24px}
+  .hstat .n{font-size:21px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="dot"></span>Signal Radar <small>开源硬件情报</small></div>
+    <nav class="nav-links">
+      <a href="#domains">领域</a>
+      <a href="#radar">信号榜</a>
+      <a href="#method">方法论</a>
+      <a href="#community">社群</a>
+    </nav>
+    <div class="status" id="status"><b>●</b> <span>LIVE</span></div>
+  </div>
+</header>
+
+<main>
+<div class="wrap hero">
+  <div class="eyebrow">EARLY SIGNAL &nbsp;/&nbsp; 比市场早一步</div>
+  <h1>在它火起来之前,<br><span class="grad">先发现它。</span></h1>
+  <p class="lede">
+    你可能早就知道 <b>Open Duck Mini</b>、<b>Microduck</b>、<b>小智</b>——但当你听说它们时,窗口已经关了一半。
+    这个雷达不追踪「最热的项目」,而是追踪<b>正在加速的早期项目</b>:连续采集 GitHub 上 AI 硬件、具身智能、VLA、世界模型、消费级机器人与 Vibe Coding 的仓库数据,
+    用增速、体量和工程活跃度算出「早鸟信号分」,让你在它成为热搜之前先看到。
+  </p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="n" id="s-repos">—</div><div class="l">追踪仓库</div></div>
+    <div class="hstat"><div class="n" id="s-domains">—</div><div class="l">细分领域</div></div>
+    <div class="hstat"><div class="n" id="s-days">—</div><div class="l">连续采集天数</div></div>
+    <div class="hstat"><div class="n" id="s-ign">—</div><div class="l">点火中的项目</div></div>
+  </div>
+  <div class="notice" id="notice" hidden></div>
+</div>
+
+<section id="domains" class="wrap">
+  <div class="sec-head">
+    <div>
+      <div class="sec-title">按领域浏览</div>
+      <div class="sec-sub">点击卡片筛选下方信号榜</div>
+    </div>
+    <div class="sec-sub" id="domain-hint"></div>
+  </div>
+  <div class="domains" id="domains-grid"></div>
+</section>
+
+<section id="radar" class="wrap">
+  <div class="sec-head">
+    <div>
+      <div class="sec-title" id="list-title">早鸟信号榜</div>
+      <div class="sec-sub" id="list-sub">越靠前 = 越「还小、但正在加速」</div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search">
+      <span style="color:var(--txt-3)">⌕</span>
+      <input id="q" type="search" placeholder="搜项目、描述或中文关键词,如:小智 / 机器狗 / VLA / 桌宠">
+    </div>
+    <div class="seg" id="sort">
+      <button data-sort="early" class="on">早鸟信号</button>
+      <button data-sort="momentum">当前热度</button>
+      <button data-sort="stars">Star 总量</button>
+      <button data-sort="new">最新收录</button>
+    </div>
+    <div class="seg" id="view">
+      <button data-view="cards" class="on">卡片</button>
+      <button data-view="table">表格</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+  <button class="more" id="more" hidden>显示更多 ↓</button>
+</section>
+
+<section id="method" class="method">
+  <div class="wrap">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">这套分数是怎么算的</div>
+        <div class="sec-sub">只要能说清楚,就不怕你质疑</div>
+      </div>
+    </div>
+    <div class="mgrid">
+      <div class="mbox">
+        <div class="h">01 / 核心思路</div>
+        <h4>小而快 &gt; 大而稳</h4>
+        <p>一个 800 star 但一周涨 200 的项目,比一个 10 万 star 但三个月没动的项目更值得你现在动手。所以「早鸟信号」奖励<b>相对增速</b>和<b>小体量</b>,而不是总 star。</p>
+      </div>
+      <div class="mbox">
+        <div class="h">02 / 评分构成</div>
+        <h4>四个维度加权</h4>
+        <div class="formula">
+Early = <em>45</em>×速度 + <em>20</em>×新鲜度<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <em>20</em>×冷门度 + <em>15</em>×工程信号<br>
+<br>
+<span>速度</span>&nbsp;&nbsp;= 0.6×周增速/体量 + 0.4×绝对周增<br>
+<span>新鲜度</span>= 仓库年龄越轻越高<br>
+<span>冷门度</span>= ≤1k star 满分,≥100k 归零<br>
+<span>工程信号</span>= commit 频率 + release + fork 比
+        </div>
+      </div>
+      <div class="mbox">
+        <div class="h">03 / 防止被骗</div>
+        <h4>刷星是能被看出来的</h4>
+        <p>纯 star 暴涨但 fork/commit 不动、没有 release、issue 冷清的项目,fork/star 比会异常低或异常高,工程信号分会被扣掉。这只是提示,不是判决——最终仍要你自己点进去看代码。</p>
+      </div>
+      <div class="mbox">
+        <div class="h">04 / 数据诚实</div>
+        <h4>不假装精确</h4>
+        <p>刚上线的项目只有 1 天快照,任何「周增速」都是<b>推算值</b>。这类数据会被标注为「基线估算」,不参与早鸟排名。随着每日采集,真实增速会逐渐接管——<b>采集越久,这个站点越准</b>。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="community" class="wrap">
+  <div class="sec-head">
+    <div>
+      <div class="sec-title">GitHub 之外的信号源</div>
+      <div class="sec-sub">很多项目在被 star 之前,先在人肉社区里口口相传</div>
+    </div>
+  </div>
+  <div class="community" id="community-grid"></div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <div>
+      数据来自 GitHub 公开 API,每日自动更新 · 最后更新 <span id="updated">—</span><br>
+      评分仅供筛选参考,不代表项目质量。发现好项目,欢迎提 PR 加进 <code style="font-family:var(--mono);font-size:11px">scripts/taxonomy.py</code>
+    </div>
+    <div><a href="#radar">回到榜单 ↑</a></div>
+  </div>
+</footer>
+
+<div class="modal" id="modal"><div class="mbody" id="mbody"></div></div>
+
+<script>
+const HEAT = {
+  ignition:{t:'IGNITING',c:'b-ignition'},
+  rising:{t:'RISING',c:'b-rising'},
+  mature:{t:'MATURE',c:'b-mature'},
+  stable:{t:'STABLE',c:'b-stable'},
+  unrated:{t:'待观测',c:'b-stable'}
+};
+const CONF = {real:'实测', early:'短期实测', estimate:'基线估算'};
+
+let DATA=null, state={domain:'all', sort:'early', view:'cards', q:'', limit:24};
+
+const fmt=n=> n>=1000 ? (n/1000).toFixed(n>=10000?0:1)+'k' : String(n);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function boot(){
+  try{
+    const r=await fetch('data/repos.json',{cache:'no-store'});
+    if(!r.ok) throw new Error(r.status);
+    DATA=await r.json();
+  }catch(e){
+    document.getElementById('list').innerHTML='<div class="empty">数据加载失败:'+esc(e.message)+'<br>请确认 data/repos.json 存在,并已通过 http 访问(不要直接双击打开文件)</div>';
+    return;
+  }
+  renderHero(); renderDomains(); renderList(); renderCommunity();
+}
+
+function renderHero(){
+  const m=DATA.meta;
+  document.getElementById('s-repos').textContent=m.total_repos;
+  document.getElementById('s-domains').textContent=DATA.domains.length;
+  document.getElementById('s-days').textContent=Math.max(m.tracked_days,1);
+  const ign=DATA.repos.filter(r=>r.heat==='ignition').length;
+  document.getElementById('s-ign').textContent=ign;
+  document.getElementById('s-ign').style.color= ign? 'var(--accent)':'var(--txt)';
+  const dt=new Date(m.generated_at);
+  document.getElementById('updated').textContent=dt.toLocaleString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+  if(m.tracked_days<7){
+    const el=document.getElementById('notice');
+    el.hidden=false;
+    const est=DATA.repos.filter(r=>r.confidence==='estimate').length;
+    el.innerHTML=`<b>数据积累中 —— 已连续采集 ${m.tracked_days} 天,还差 ${Math.max(0,7-m.tracked_days)} 天。</b>
+      真实增速需要至少 7 天快照才能算出来。当前 ${est} 个项目全部处于<b>基线期</b>:我只记录它们的体量,<b>不编造增速、不排虚假的名次</b>,卡片上的「7日增量」显示为「—」。
+      等采集满 7 天,「早鸟信号榜」和「点火中」名单会自动生效。<code>建议先收藏,一周后再来看。</code>`;
+  }
+  document.getElementById('status').innerHTML='<b>●</b> <span>'+(m.tracked_days>1?'LIVE · '+m.total_repos+' repos':'BASELINE · D'+m.tracked_days)+'</span>';
+}
+
+function renderDomains(){
+  const g=document.getElementById('domains-grid');
+  const all=`<div class="dcard ${state.domain==='all'?'on':''}" data-d="all" style="--c:#ffb03a">
+      <div class="e">🛰️</div><div class="n">全部领域</div>
+      <div class="m"><b>${DATA.repos.length}</b> repos</div></div>`;
+  g.innerHTML=all+DATA.domains.map(d=>`
+    <div class="dcard ${state.domain===d.id?'on':''}" data-d="${d.id}" style="--c:${d.color}" title="${esc(d.desc)}">
+      <div class="e">${d.emoji}</div>
+      <div class="n">${esc(d.name)}</div>
+      <div class="m"><b>${d.count}</b> repos · <b>${fmt(d.total_stars)}</b>★</div>
+    </div>`).join('');
+  g.querySelectorAll('.dcard').forEach(c=>c.onclick=()=>{
+    state.domain=c.dataset.d; state.limit=24;
+    document.getElementById('domains-grid').querySelectorAll('.dcard').forEach(x=>x.classList.toggle('on',x===c));
+    renderList();
+    document.getElementById('radar').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  document.getElementById('domain-hint').textContent='共 '+DATA.domains.length+' 个方向 · '+DATA.repos.length+' 个项目';
+}
+
+function currentList(){
+  let arr=DATA.repos.slice();
+  if(state.domain!=='all') arr=arr.filter(r=>r.domains.includes(state.domain));
+  if(state.q){
+    const q=state.q.toLowerCase();
+    const terms=q.split(/\s+/).filter(Boolean);
+    const hay=r=>(r.full_name+' '+(r.description||'')+' '+(r.alias||'')+' '+r.lang+' '+(r.topics||[]).join(' ')).toLowerCase();
+    arr=arr.filter(r=>{const h=hay(r);return terms.every(t=>h.includes(t));});
+  }
+  const nn=v=>v==null?-1:v;
+  if(state.sort==='early') arr.sort((a,b)=>nn(b.early_score)-nn(a.early_score) || b.stars-a.stars);
+  if(state.sort==='momentum') arr.sort((a,b)=>nn(b.momentum)-nn(a.momentum) || b.stars-a.stars);
+  if(state.sort==='stars') arr.sort((a,b)=>b.stars-a.stars);
+  if(state.sort==='new') arr.sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||'') || b.stars-a.stars);
+  return arr;
+}
+
+function spark(hist){
+  if(!hist || hist.length<2) return '';
+  const s=hist.map(h=>h.s), mn=Math.min(...s), mx=Math.max(...s), rng=(mx-mn)||1;
+  const W=300,H=26;
+  const pts=s.map((v,i)=>`${(i/(s.length-1)*W).toFixed(1)},${(H-2-(v-mn)/rng*(H-5)).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+    <polyline points="${pts}" fill="none" stroke="rgba(255,176,58,.75)" stroke-width="1.5"/></svg>`;
+}
+
+function card(r){
+  const h=HEAT[r.heat]||HEAT.stable;
+  const doms=r.domains.map(id=>{
+    const d=DATA.domains.find(x=>x.id===id); if(!d) return '';
+    return `<span class="tag d" style="--c:${d.color}">${esc(d.name.split(' · ')[0])}</span>`;
+  }).join('');
+  const g7 = r.confidence==='estimate'
+    ? `<span class="v" style="color:var(--txt-3)">—</span>`
+    : `<span class="v up">+${fmt(r.growth_7d)}</span>`;
+  return `<a class="card ${r.heat==='ignition'?'ign':''}" href="${esc(r.html_url)}" target="_blank" rel="noopener">
+    <div class="ctop">
+      ${r.avatar?`<img class="av" src="${esc(r.avatar)}" alt="" loading="lazy">`:''}
+      <span class="rname">${esc(r.full_name.split('/')[0])}<span class="o">/</span>${esc(r.full_name.split('/')[1]||'')}</span>
+      ${r.kind==='list'?'<span class="badge b-list">清单类</span>':''}
+      <span class="badge ${h.c}">${r.heat==='ignition'?'⚡':''}${h.t}</span>
+    </div>
+    <div class="desc">${esc(r.description)||'<span style="color:var(--txt-3)">(无描述)</span>'}</div>
+    ${r.why?`<div class="why">${esc(r.why)}</div>`:''}
+    <div class="metrics">
+      <div class="met"><span class="v">${fmt(r.stars)}</span><span class="k">STARS</span></div>
+      <div class="met">${g7}<span class="k">7日增量${r.confidence==='estimate'?'':' · '+CONF[r.confidence]}</span></div>
+      <div class="met"><span class="v">${fmt(r.forks)}</span><span class="k">FORKS</span></div>
+      ${r.lang?`<div class="met"><span class="v" style="font-size:12px">${esc(r.lang)}</span><span class="k">LANG</span></div>`:''}
+    </div>
+    ${spark(r.history)}
+    <div class="cfoot">
+      ${doms}
+      ${r.early_score!=null
+        ? `<span class="score"><span class="s">${r.early_score.toFixed(0)}</span><span class="t">E-SCORE</span></span>`
+        : `<span class="score"><span class="t">满 7 天后出分</span></span>`}
+    </div>
+  </a>`;
+}
+
+function table(arr){
+  return `<div style="overflow-x:auto"><table class="tbl">
+    <thead><tr>
+      <th>项目</th><th style="text-align:right">Stars</th><th style="text-align:right">7日增量</th>
+      <th style="text-align:right">E-SCORE</th><th style="text-align:right">热度</th><th>状态</th>
+      <th>语言</th><th>更新</th>
+    </tr></thead><tbody>${arr.map(r=>`<tr>
+      <td><a href="${esc(r.html_url)}" target="_blank" rel="noopener" class="nm">${esc(r.full_name)}</a>
+        <div style="font-size:11.5px;color:var(--txt-3);max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.description)}</div></td>
+      <td class="num">${fmt(r.stars)}</td>
+      <td class="num" style="color:${r.confidence==='estimate'?'var(--txt-3)':'var(--green)'}">${r.confidence==='estimate'?'—':fmt(r.growth_7d)}</td>
+      <td class="num" style="color:var(--accent);font-weight:600">${r.early_score!=null?r.early_score.toFixed(0):'—'}</td>
+      <td class="num">${r.momentum!=null?r.momentum.toFixed(0):'—'}</td>
+      <td><span class="badge ${HEAT[r.heat].c}" style="margin:0">${HEAT[r.heat].t}</span></td>
+      <td style="font-size:12px;color:var(--txt-3)">${esc(r.lang)||'—'}</td>
+      <td style="font-size:11.5px;color:var(--txt-3);white-space:nowrap">${esc(r.pushed_at)||'—'}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+function renderList(){
+  const all=currentList();
+  const arr=all.slice(0,state.limit);
+  const el=document.getElementById('list');
+  const d=DATA.domains.find(x=>x.id===state.domain);
+  const noneRanked = !all.some(r=>r.early_score!=null);
+  document.getElementById('list-title').textContent = noneRanked
+    ? '项目目录(基线期)' + (d?' · '+d.name.split(' · ')[0]:'')
+    : (state.sort==='early'?'早鸟信号榜':state.sort==='stars'?'按 Star 总量':
+       state.sort==='momentum'?'当前热度榜':'最新收录');
+  const estCount=all.filter(r=>r.confidence==='estimate').length;
+  document.getElementById('list-sub').textContent = d
+    ? `${d.emoji} ${d.name} · ${all.length} 个项目`
+    : (estCount===all.length && all.length
+       ? '当前为基线快照,尚无实测增速 · 按 Star 排序展示全部收录项目;连续采集 7 天后自动切换为「早鸟信号」排名'
+       : `${all.length} 个项目 · 越靠前 = 越「还小、但正在加速」`);
+  if(!all.length){el.innerHTML='<div class="empty">没有匹配的项目</div>';document.getElementById('more').hidden=true;return;}
+  el.innerHTML = state.view==='cards'
+    ? `<div class="grid">${arr.map(card).join('')}</div>`
+    : table(arr);
+  const more=document.getElementById('more');
+  more.hidden = arr.length>=all.length;
+  more.textContent = `显示更多(${all.length-arr.length} 个剩余)`;
+  more.onclick=()=>{state.limit+=24;renderList();};
+}
+
+function renderCommunity(){
+  const C=[
+    {t:'💬 Discord 社群',d:'Open Duck、LeRobot、Reachy、Microduck 的开发者都在各自 Discord 里先讨论需求,再写代码。',u:'discord.gg · 搜索项目名'},
+    {t:'🧠 Hugging Face Hub',d:'看机器人策略、数据集、VLA 模型的下载量排行——权重下载比 star 更早反映真实使用。',u:'huggingface.co/models?pipeline_tag=robotics'},
+    {t:'📕 小红书 / B站',d:'国内 AI 硬件的真实热度先出现在这两个平台。「小智」就是先在 B站 DIY 圈炸开的。',u:'搜索 xiaozhi / 桌宠 / Open Duck'},
+    {t:'🟠 Hacker News',d:'Newest 队列里的 Show HN,往往比首页早 24-48 小时。',u:'news.ycombinator.com/newest'},
+    {t:'🚀 Product Hunt',d:'消费级 AI 硬件产品的首发地,适合判断「能不能卖给普通人」。',u:'producthunt.com/topics/hardware'},
+    {t:'📄 arXiv cs.RO',d:'VLA / 世界模型的论文几乎都是先出 arXiv,再出代码。盯 cs.RO 的 daily。',u:'arxiv.org/list/cs.RO/recent'},
+    {t:'🐦 X / Twitter',d:'跟着作者的账号看,而不是看热度榜:HF 的 @ClementDelangue、Pollen、Unitree 团队都是一手发布。',u:'逐个关注项目作者'},
+    {t:'🍠 淘宝 / 闲鱼',d:'DIY 套件的销量和二手转卖量,是消费级硬件最诚实的验证指标。',u:'搜 小智 esp32 套件'},
+  ];
+  document.getElementById('community-grid').innerHTML=C.map(c=>`
+    <div class="ccard"><div class="t">${c.t}</div><div class="d">${c.d}</div><div class="u">${c.u}</div></div>`).join('');
+}
+
+document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value.trim();state.limit=24;renderList();});
+document.querySelectorAll('#sort button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#sort button').forEach(x=>x.classList.toggle('on',x===b));
+  state.sort=b.dataset.sort;state.limit=24;renderList();
+});
+document.querySelectorAll('#view button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#view button').forEach(x=>x.classList.toggle('on',x===b));
+  state.view=b.dataset.view;renderList();
+});
+document.getElementById('modal').onclick=e=>{if(e.target.id==='modal')e.currentTarget.classList.remove('on');};
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('modal').classList.remove('on');});
+
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+name: Update signals
+
+on:
+  schedule:
+    # 每天 UTC 00:20（北京时间 08:20）跑一次
+    - cron: "20 0 * * *"
+  workflow_dispatch:          # 支持手动触发
+    inputs:
+      discover:
+        description: "同时跑关键词发现，输出新面孔候选"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-signals
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch & score
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/pipeline.py ${{ inputs.discover && '--discover' || '' }}
+
+      - name: Commit data
+        run: |
+          git config user.name  "signal-radar-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "::notice::数据无变化，跳过提交"
+          else
+            DATE=$(date -u +%Y-%m-%d)
+            git commit -m "chore(data): 更新信号数据 ${DATE}"
+            git pull --rebase --autostash origin ${GITHUB_REF_NAME} || true
+            git push
+          fi
+
+      - name: Summary
+        run: |
+          python - <<'EOF'
+          import json, os
+          d = json.load(open("data/repos.json"))
+          m = d["meta"]
+          top = [r for r in d["repos"] if r.get("early_score") is not None][:5]
+          lines = [f"**{m['total_repos']}** 个仓库 · 采集 **{m['tracked_days']}** 天 · 缺 {len(m['missing'])}"]
+          if top:
+              lines.append("\n| 项目 | Stars | E-SCORE |")
+              lines.append("|---|---:|---:|")
+              for r in top:
+                  lines.append(f"| [{r['full_name']}]({r['html_url']}) | {r['stars']} | {r['early_score']:.0f} |")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "w") as f:
+              f.write("\n".join(lines))
+          EOF
