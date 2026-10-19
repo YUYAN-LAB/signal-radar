@@ -215,8 +215,13 @@ section{padding:56px 24px}
   background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:14px;margin-top:12px;
   overflow-x:auto;
 }
-.formula em{color:var(--accent);font-style:normal}
-.formula span{color:var(--txt-3)}
+.formula em{
+  color:var(--accent);font-style:normal;font-weight:700;font-size:13px;
+}
+.formula span{color:var(--txt-3);margin:0 1px}
+.flist{font-size:11.5px;line-height:1.85;color:var(--txt-2);margin-top:10px}
+.flist div{display:flex;gap:8px}
+.flist span{color:var(--txt-3);min-width:52px;flex:0 0 auto}
 
 /* ── 社群 ── */
 .community{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
@@ -353,14 +358,13 @@ footer a:hover{color:var(--accent)}
       <div class="mbox">
         <div class="h">02 / 评分构成</div>
         <h4>四个维度加权</h4>
-        <div class="formula">
-Early = <em>45</em>×速度 + <em>20</em>×新鲜度<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <em>20</em>×冷门度 + <em>15</em>×工程信号<br>
-<br>
-<span>速度</span>&nbsp;&nbsp;= 0.6×周增速/体量 + 0.4×绝对周增<br>
-<span>新鲜度</span>= 仓库年龄越轻越高<br>
-<span>冷门度</span>= ≤1k star 满分,≥100k 归零<br>
-<span>工程信号</span>= commit 频率 + release + fork 比
+        <div class="formula">E-SCORE = <em>45</em>×速度 <span>+</span> <em>20</em>×新鲜度 <span>+</span>
+          <em>20</em>×冷门度 <span>+</span> <em>15</em>×工程信号</div>
+        <div class="flist">
+          <div><span>速度</span>0.6 × 周增/体量 + 0.4 × 绝对周增</div>
+          <div><span>新鲜度</span>仓库年龄越轻越高</div>
+          <div><span>冷门度</span>≤1k star 满分,≥100k 归零</div>
+          <div><span>工程信号</span>commit 频率 + release + fork 比</div>
         </div>
       </div>
       <div class="mbox">
