@@ -48,11 +48,13 @@ https://<你的用户名>.github.io/signal-radar/
 
 ### 3. 让定时任务跑起来
 
-`Update signals` 工作流默认每天 UTC 00:20(北京时间 08:20)执行,用的是 GitHub 自动提供的 `GITHUB_TOKEN`,**无需任何配置**。
+`Update signals` 工作流每天在**北京 08:20 / 11:20 / 15:20** 三个窗口触发(后两个是兜底,数据够新会自动跳过),用的是 GitHub 自动提供的 `GITHUB_TOKEN`,**无需任何配置**。
 
-想立刻跑一次:仓库 → **Actions** → **Update signals** → **Run workflow**。
+想立刻跑一次:仓库 → **Actions** → **Update signals** → **Run workflow**(默认 `force=true`,会跳过时间判断)。
 
 > ⚠️ 第一次跑完之后,页面顶部会显示「数据积累中」——这是正常的。**连续采集 7 天后**,「早鸟信号榜」才会真正生效。采集越久,信号越准。
+
+**运维说明见 [OPS.md](OPS.md)** —— 包含定时机制、健康判断、故障修复。
 
 ---
 
