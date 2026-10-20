@@ -20,8 +20,14 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # 定时更新任务跑完后自动重新部署；失败则不部署
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # 部署条件：
+    #  - push：代码/数据推上来 → 部署
+    #  - workflow_run：采集任务成功后 → 部署（数据已通过 commit 推送，这里保证一定重建 Pages）
+    #  - 手动：随时可部署
+    # 采集任务若因「数据还很新」而跳过，commit 不会产生变化，重复部署也无害。
+    if: >-
+      github.event_name != 'workflow_run'
+      || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

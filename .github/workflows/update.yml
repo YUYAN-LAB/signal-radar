@@ -2,10 +2,19 @@ name: Update signals
 
 on:
   schedule:
-    # 每天 UTC 00:20（北京时间 08:20）跑一次
+    # 主窗口：每天 UTC 00:20（北京 08:20）
     - cron: "20 0 * * *"
-  workflow_dispatch:          # 支持手动触发
+    # 兜底窗口：UTC 03:20（北京 11:20）。GitHub 的定时任务常延迟甚至漏跑，
+    # 这一趟只在「距上次成功已超过 20 小时」时才真正干活，否则空转退出。
+    - cron: "20 3 * * *"
+    # 第三道：UTC 07:20（北京 15:20），同一个兜底逻辑,留给前两次都失手的极端情况
+    - cron: "20 7 * * *"
+  workflow_dispatch:
     inputs:
+      force:
+        description: "强制采集（忽略兜底的时间判断）"
+        type: boolean
+        default: true
       discover:
         description: "同时跑关键词发现，输出新面孔候选"
         type: boolean
@@ -13,6 +22,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: update-signals
@@ -29,13 +39,48 @@ jobs:
         with:
           python-version: "3.11"
 
+      # ── 护栏 1：判断是否需要采集 ──────────────────────────────
+      # 定时触发时，如果 20 小时内已经成功过，就直接跳过，
+      # 避免一天被跑三遍、白白消耗 API 配额。
+      - name: Decide whether to refresh
+        id: check
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+
+          def out(k, v):
+              with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                  f.write(f"{k}={v}\n")
+
+          if os.environ.get("FORCE") == "true":
+              print("手动触发 → 强制采集")
+              out("refreshed", "true")
+              raise SystemExit
+
+          data = json.load(open("data/repos.json"))
+          last = datetime.fromisoformat(data["meta"]["generated_at"].replace("Z", "+00:00"))
+          age_h = (datetime.now(timezone.utc) - last).total_seconds() / 3600
+          print(f"上次成功采集: {last:%Y-%m-%d %H:%M}Z（{age_h:.1f} 小时前）")
+
+          if age_h < 20:
+              print("→ 数据还很新，本次跳过（这是预期行为，不是失败）")
+              out("refreshed", "false")
+          else:
+              print("→ 已超过 20 小时，本次执行兜底采集")
+              out("refreshed", "true")
+          PY
+        env:
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force && 'true' || 'false' }}
+
       - name: Fetch & score
+        if: steps.check.outputs.refreshed == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python scripts/pipeline.py ${{ inputs.discover && '--discover' || '' }}
+        run: python scripts/pipeline.py ${{ inputs.discover && '--discover' || '' }}
 
       - name: Commit data
+        if: steps.check.outputs.refreshed == 'true'
         run: |
           git config user.name  "signal-radar-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -51,17 +96,55 @@ jobs:
 
       - name: Summary
         run: |
-          python - <<'EOF'
+          python - <<'PY'
           import json, os
           d = json.load(open("data/repos.json"))
           m = d["meta"]
-          top = [r for r in d["repos"] if r.get("early_score") is not None][:5]
-          lines = [f"**{m['total_repos']}** 个仓库 · 采集 **{m['tracked_days']}** 天 · 缺 {len(m['missing'])}"]
-          if top:
-              lines.append("\n| 项目 | Stars | E-SCORE |")
-              lines.append("|---|---:|---:|")
-              for r in top:
-                  lines.append(f"| [{r['full_name']}]({r['html_url']}) | {r['stars']} | {r['early_score']:.0f} |")
-          with open(os.environ["GITHUB_STEP_SUMMARY"], "w") as f:
-              f.write("\n".join(lines))
-          EOF
+          ranked = [r for r in d["repos"] if r.get("early_score") is not None][:5]
+          lines = [f"采集 **{m['tracked_days']}** 天 · **{m['total_repos']}** 个仓库 · 缺失 {len(m['missing'])}"]
+          if ranked:
+              lines += ["", "| 项目 | Stars | E-SCORE |", "|---|---:|---:|"]
+              lines += [f"| [{r['full_name']}]({r['html_url']}) | {r['stars']} | {r['early_score']:.0f} |"
+                        for r in ranked]
+          open(os.environ["GITHUB_STEP_SUMMARY"], "w").write("\n".join(lines))
+          PY
+
+  # ── 护栏 2：数据太旧就开 Issue 告警 ─────────────────────────
+  # 超过 48 小时没更新 = 自动化确实断了，必须让你知道，而不是默默冻结。
+  alert:
+    needs: update
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check data freshness
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess
+          from datetime import datetime, timezone
+
+          d = json.load(open("data/repos.json"))
+          last = datetime.fromisoformat(d["meta"]["generated_at"].replace("Z", "+00:00"))
+          age_h = (datetime.now(timezone.utc) - last).total_seconds() / 3600
+
+          if age_h < 48:
+              print(f"数据 {age_h:.1f} 小时前更新过，健康")
+              raise SystemExit(0)
+
+          title = "⚠️ 数据已超过 48 小时未更新"
+          body = (f"最后成功采集：**{last:%Y-%m-%d %H:%M} UTC**（{age_h:.0f} 小时前）\n\n"
+                  "自动化可能已被 GitHub 停用（仓库 60 天无活动会触发），或采集持续失败。\n\n"
+                  "**处理**：Actions → Update signals → Run workflow 手动跑一次；"
+                  "若仍失败，检查 `scripts/pipeline.py` 的日志与 GitHub API 配额。")
+          r = subprocess.run(["gh", "issue", "list", "--state", "open",
+                              "--json", "number,title"], capture_output=True, text=True)
+          existing = json.loads(r.stdout or "[]")
+          if any(i["title"] == title for i in existing):
+              print("已有未关闭的同类 Issue，避免重复开单")
+              raise SystemExit(0)
+          subprocess.run(["gh", "issue", "create", "--title", title, "--body", body], check=True)
+          print("已创建告警 Issue")
+          PY
